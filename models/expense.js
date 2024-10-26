@@ -1,4 +1,5 @@
-const Sequelize= require('sequelize');
+// models/expense.js
+const Sequelize = require('sequelize');
 const sequelize = require('../util/database');
 
 const Expense = sequelize.define('Expense', {
@@ -8,7 +9,7 @@ const Expense = sequelize.define('Expense', {
         primaryKey: true,
     },
     amount: {
-        type:Sequelize.FLOAT,
+        type: Sequelize.FLOAT,
         allowNull: false,
     },
     description: {
@@ -16,7 +17,7 @@ const Expense = sequelize.define('Expense', {
         allowNull: false,
     },
     category: {
-        type:Sequelize.STRING,
+        type: Sequelize.STRING,
         allowNull: false,
     },
     userId: {

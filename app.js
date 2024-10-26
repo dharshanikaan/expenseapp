@@ -13,8 +13,8 @@ const sequelize = require('./util/database');
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(express.static(path.join(__dirname, 'views')));
 // Serve HTML files
 app.get('/signup', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'signup.html'));
@@ -31,7 +31,6 @@ app.get('/expenses', (req, res) => {
 app.get('/leaderboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'premiumfeatures.html'));
 });
-
 
 
 // Use routes
