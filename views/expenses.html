@@ -43,6 +43,7 @@
 
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
+        // Your JavaScript logic for expenses
         const loadUserStatus = async () => {
             const token = localStorage.getItem('token');
             const response = await fetch('/api/users/status', {
@@ -50,13 +51,10 @@
                     'Authorization': `Bearer ${token}`
                 }
             });
-
             if (response.ok) {
                 const data = await response.json();
                 const messageDiv = document.getElementById('message');
                 messageDiv.textContent = data.isPremium ? 'You are a Premium Member!' : 'You are a Regular Member.';
-                
-                // Show the leaderboard button if the user is a premium member
                 document.getElementById('leaderboard-button').style.display = data.isPremium ? 'inline' : 'none';
             }
         };
@@ -108,7 +106,6 @@
 
         document.getElementById('expense-form').addEventListener('submit', async (event) => {
             event.preventDefault();
-
             const amount = document.getElementById('amount').value;
             const description = document.getElementById('description').value;
             const category = document.getElementById('category').value;
@@ -203,48 +200,10 @@
         };
 
         // Load leaderboard on button click
-        document.getElementById('leaderboard-button').addEventListener('click', async () => {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                console.error('No token found, please log in.');
-                return; // Or redirect to the login page
-            }
-
-            try {
-                const response = await fetch('http://localhost:3000/api/premium/leaderboard', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-
-                const data = await response.json();
-                renderLeaderboard(data);
-            } catch (error) {
-                console.error('Error fetching leaderboard:', error);
-            }
-        });
-
-        function renderLeaderboard(data) {
-            const leaderboardContainer = document.querySelector('#leaderboard tbody');
-            leaderboardContainer.innerHTML = ''; // Clear existing content
-
-            data.forEach(user => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${user.id}</td>
-                    <td>${user.name}</td>
-                    <td>₹${user.totalexpense}</td>
-                `;
-                leaderboardContainer.appendChild(row);
-            });
-        }
         document.getElementById('leaderboard-button').addEventListener('click', () => {
-    window.location.href = '/leaderboard'; // Redirect to the leaderboard page
-});
+            window.location.href = 'leaderboard.html'; // Redirect to the leaderboard page
+        });
     </script>
 </body>
 </html>
+

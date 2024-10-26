@@ -7,7 +7,7 @@ const userRoutes = require('./routes/userroutes');
 const expenseRoutes = require('./routes/expenseroutes');
 const purchaseRoutes = require('./routes/purchaseroutes');
 const premiumFeaturesRoutes = require('./routes/premiumfeaturesroutes');
-const passwordRoutes = require('./routes/password');// Ensure this includes the new leaderboard route
+const passwordRoutes = require('./routes/password');
 const sequelize = require('./util/database');
 
 const app = express();
@@ -29,15 +29,17 @@ app.get('/expenses', (req, res) => {
 });
 
 app.get('/leaderboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'premiumfeatures.html')); // Ensure this points to your leaderboard HTML file
+    res.sendFile(path.join(__dirname, 'views', 'premiumfeatures.html'));
 });
+
+
 
 // Use routes
 app.use('/api/users', userRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/premium', purchaseRoutes);
 app.use('/api/premium', premiumFeaturesRoutes);
-app.use('/password', passwordRoutes); // This should come after purchaseRoutes
+app.use('/password', passwordRoutes);
 
 // Sync database and start server
 sequelize.sync()

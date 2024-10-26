@@ -1,10 +1,11 @@
 const express = require('express');
-const { getLeaderboard } = require('../controller/premiumfeaturescontroller'); // Make sure the path is correct
-const authenticateToken = require('../middleware/auth');
+const { getLeaderboard, getSortedExpenses } = require('../controller/premiumFeaturescontroller');
+const authenticateToken = require('../middleware/authenticatetoken');
+const checkPremium = require('../middleware/checkpremium');
 
 const router = express.Router();
 
-// Route to get leaderboard
-router.get('/leaderboard', authenticateToken, getLeaderboard); // Ensure this matches your API endpoint
+router.get('/leaderboard', authenticateToken, getLeaderboard);
+router.get('/sort', authenticateToken, checkPremium, getSortedExpenses);
 
 module.exports = router;

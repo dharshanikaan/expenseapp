@@ -4,21 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leaderboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { padding: 20px; max-width: 600px; margin: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; border: 1px solid #ccc; }
+        button { margin-top: 10px; }
+        .button-container { margin-bottom: 20px; }
+    </style>
 </head>
 <body>
-    <h1>Leaderboard</h1>
-    <table id="leaderboard">
-        <thead>
-            <tr>
-                <th>User ID</th>
-                <th>User Name</th>
-                <th>Total Amount</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Leaderboard rows will be populated here -->
-        </tbody>
-    </table>
+    <div class="container">
+        <h1>Leaderboard</h1>
+        <div class="button-container">
+            <button onclick="fetchLeaderboard()">View Leaderboard</button>
+            <button onclick="toggleSortOptions()">Sort</button>
+        </div>
+        <div id="sort-options" style="display: none;">
+            <button onclick="fetchLeaderboard('daily')">Daily</button>
+            <button onclick="fetchLeaderboard('weekly')">Weekly</button>
+            <button onclick="fetchLeaderboard('monthly')">Monthly</button>
+            <button onclick="fetchLeaderboard('yearly')">Yearly</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>User Name</th>
+                    <th>Total Salary</th>
+                    <th>Total Expenses</th>
+                    <th>Savings</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboard-list"></tbody>
+        </table>
+        <button onclick="location.href='expenses.html'">Back to Dashboard</button>
+    </div>
 
     <script>
         const token = localStorage.getItem('token');
@@ -27,35 +48,46 @@
             window.location.href = '/login'; // Redirect to login page
         }
 
-        fetch('http://localhost:3000/api/premium/leaderboard', {
-            headers: {
-                'Authorization': `Bearer ${token}`
+        // Fetch the leaderboard with an optional timeframe
+        function fetchLeaderboard(timeframe) {
+            let url = 'http://localhost:3000/api/premium/leaderboard';
+            if (timeframe) {
+                url += `?timeframe=${timeframe}`; // Add timeframe to the URL
             }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            renderLeaderboard(data);
-        })
-        .catch(error => console.error('Error fetching leaderboard:', error));
+
+            fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => renderLeaderboard(data))
+            .catch(error => console.error('Error fetching leaderboard:', error));
+        }
 
         function renderLeaderboard(data) {
-            const leaderboardContainer = document.querySelector('#leaderboard tbody');
-            leaderboardContainer.innerHTML = ''; // Clear existing content
+            const leaderboardContainer = document.querySelector('#leaderboard-list');
+            leaderboardContainer.innerHTML = '';
 
             data.forEach(user => {
+                const savings = user.totalSalary - user.totalExpenses; // Calculate savings
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${user.id}</td>
                     <td>${user.name}</td>
-                    <td>₹${user.totalexpense}</td>
+                    <td>₹${user.totalSalary}</td>
+                    <td>₹${user.totalExpenses}</td>
+                    <td>₹${savings}</td>
                 `;
                 leaderboardContainer.appendChild(row);
             });
+        }
+
+        // Toggle visibility of sort options
+        function toggleSortOptions() {
+            const sortOptions = document.getElementById('sort-options');
+            sortOptions.style.display = sortOptions.style.display === 'none' ? 'block' : 'none';
         }
     </script>
 </body>
