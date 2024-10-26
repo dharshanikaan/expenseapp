@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Link to your CSS file -->
+    <style>
+        /* Sample styles for the dashboard */
+        .container {
+            padding: 20px;
+        }
+        .filters {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dashboard</h1>
+        <div class="filters">
+            <label for="filter">Filter by:</label>
+            <select id="filter">
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+            </select>
+        </div>
+
+        <div class="summary">
+            <h2>Expenses</h2>
+            <ul id="expense-list"></ul>
+            <h2>Income</h2>
+            <ul id="income-list"></ul>
+        </div>
+
+        <button id="download-btn" disabled>Download Expenses</button>
+        <button id="sort-btn" disabled>Sort Expenses</button> <!-- Sort button added -->
+    </div>
+
+    <script>
+        // Sample data
+        let expensesData = [
+            { date: '2024-01-01', amount: 100, category: 'Food' },
+            { date: '2024-01-02', amount: 50, category: 'Transport' },
+            { date: '2024-01-03', amount: 200, category: 'Entertainment' },
+        ];
+
+        let incomeData = [
+            { date: '2024-01-01', amount: 500, source: 'Salary' },
+            { date: '2024-01-15', amount: 150, source: 'Freelance' },
+        ];
+
+        // Function to render expenses and income
+        function renderData() {
+            const expenseList = document.getElementById('expense-list');
+            const incomeList = document.getElementById('income-list');
+            expenseList.innerHTML = '';
+            incomeList.innerHTML = '';
+
+            expensesData.forEach(expense => {
+                const li = document.createElement('li');
+                li.textContent = `${expense.date}: $${expense.amount} (${expense.category})`;
+                expenseList.appendChild(li);
+            });
+
+            incomeData.forEach(income => {
+                const li = document.createElement('li');
+                li.textContent = `${income.date}: $${income.amount} (${income.source})`;
+                incomeList.appendChild(li);
+            });
+        }
+
+        // Filter functionality
+        document.getElementById('filter').addEventListener('change', (event) => {
+            const timeframe = event.target.value;
+            renderData(); // Re-render the data
+        });
+
+        // Download functionality
+        document.getElementById('download-btn').addEventListener('click', () => {
+            if (isUserPremium()) {
+                const blob = new Blob([JSON.stringify(expensesData)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'expenses.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                alert('This feature is available for premium users only.');
+            }
+        });
+
+        // Sort functionality
+        document.getElementById('sort-btn').addEventListener('click', () => {
+            if (isUserPremium()) {
+                expensesData.sort((a, b) => a.amount - b.amount); // Sort by amount
+                renderData();
+            } else {
+                alert('This feature is available for premium users only.');
+            }
+        });
+
+        // Mock function to determine if the user is premium
+        function isUserPremium() {
+            return true; // Change this based on your application's logic
+        }
+
+        // Initial render
+        renderData();
+    </script>
+</body>
+</html>

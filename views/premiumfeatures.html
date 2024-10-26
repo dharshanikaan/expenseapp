@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+</head>
+<body>
+    <h1>Leaderboard</h1>
+    <table id="leaderboard">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>User Name</th>
+                <th>Total Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Leaderboard rows will be populated here -->
+        </tbody>
+    </table>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.error('No token found, please log in.');
+            window.location.href = '/login'; // Redirect to login page
+        }
+
+        fetch('http://localhost:3000/api/premium/leaderboard', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            renderLeaderboard(data);
+        })
+        .catch(error => console.error('Error fetching leaderboard:', error));
+
+        function renderLeaderboard(data) {
+            const leaderboardContainer = document.querySelector('#leaderboard tbody');
+            leaderboardContainer.innerHTML = ''; // Clear existing content
+
+            data.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.name}</td>
+                    <td>₹${user.totalexpense}</td>
+                `;
+                leaderboardContainer.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>
