@@ -10,7 +10,7 @@
         .container {
             padding: 20px;
         }
-        .filters {
+        .filters, .premium-message {
             margin-bottom: 20px;
         }
         button {
@@ -22,103 +22,62 @@
             list-style-type: none;
             padding: 0;
         }
+        #sorted-data {
+            margin-top: 20px;
+            display: none; /* Hidden initially */
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Dashboard</h1>
+        <h1>Expense Tracker</h1>
+        
+        <div class="premium-message">
+            <h2>You are a Premium Member!</h2>
+            <button id="view-leaderboard">View Leaderboard</button>
+        </div>
+
+        <h2>Add Expense</h2>
+        <input type="text" id="amount" placeholder="Amount" />
+        <input type="text" id="description" placeholder="Description" />
+        <select id="category">
+            <option value="">Select a category</option>
+            <option value="Food">Food</option>
+            <option value="Transport">Transport</option>
+            <option value="Entertainment">Entertainment</option>
+        </select>
+        <button id="add-expense">Add Expense</button>
+
+        <h2>Your Expenses</h2>
+        <ul id="expense-list"></ul>
+
         <div class="filters">
-            <label for="filter">Filter by:</label>
-            <select id="filter">
-                <option value="daily">Daily</option>
+            <label for="sort-timeframe">Sort by:</label>
+            <select id="sort-timeframe">
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
             </select>
+            <button id="sort-btn">Sort Expenses</button>
         </div>
 
-        <div class="summary">
-            <h2>Expenses</h2>
-            <ul id="expense-list"></ul>
-            <h2>Income</h2>
-            <ul id="income-list"></ul>
+        <!-- Leaderboard Section -->
+        <div id="leaderboard" style="display: none;">
+            <h2>Leaderboard</h2>
+            <ul id="leaderboard-list"></ul>
         </div>
 
-        <button id="download-btn" disabled>Download Expenses</button>
-        <button id="sort-btn" disabled>Sort Expenses</button> <!-- Sort button added -->
+        <div id="sorted-data">
+            <h2>Sorted Expenses</h2>
+            <ul id="sorted-expense-list"></ul>
+            <h2>Sorted Income</h2>
+            <ul id="sorted-income-list"></ul>
+            <button id="download-btn" disabled>Download Sorted Data</button>
+        </div>
     </div>
 
     <script>
-        // Sample data
-        let expensesData = [
-            { date: '2024-01-01', amount: 100, category: 'Food' },
-            { date: '2024-01-02', amount: 50, category: 'Transport' },
-            { date: '2024-01-03', amount: 200, category: 'Entertainment' },
-        ];
-
-        let incomeData = [
-            { date: '2024-01-01', amount: 500, source: 'Salary' },
-            { date: '2024-01-15', amount: 150, source: 'Freelance' },
-        ];
-
-        // Function to render expenses and income
-        function renderData() {
-            const expenseList = document.getElementById('expense-list');
-            const incomeList = document.getElementById('income-list');
-            expenseList.innerHTML = '';
-            incomeList.innerHTML = '';
-
-            expensesData.forEach(expense => {
-                const li = document.createElement('li');
-                li.textContent = `${expense.date}: $${expense.amount} (${expense.category})`;
-                expenseList.appendChild(li);
-            });
-
-            incomeData.forEach(income => {
-                const li = document.createElement('li');
-                li.textContent = `${income.date}: $${income.amount} (${income.source})`;
-                incomeList.appendChild(li);
-            });
-        }
-
-        // Filter functionality
-        document.getElementById('filter').addEventListener('change', (event) => {
-            const timeframe = event.target.value;
-            renderData(); // Re-render the data
-        });
-
-        // Download functionality
-        document.getElementById('download-btn').addEventListener('click', () => {
-            if (isUserPremium()) {
-                const blob = new Blob([JSON.stringify(expensesData)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'expenses.json';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            } else {
-                alert('This feature is available for premium users only.');
-            }
-        });
-
-        // Sort functionality
-        document.getElementById('sort-btn').addEventListener('click', () => {
-            if (isUserPremium()) {
-                expensesData.sort((a, b) => a.amount - b.amount); // Sort by amount
-                renderData();
-            } else {
-                alert('This feature is available for premium users only.');
-            }
-        });
-
-        // Mock function to determine if the user is premium
-        function isUserPremium() {
-            return true; // Change this based on your application's logic
-        }
-
-        // Initial render
-        renderData();
+        // JavaScript code goes here
     </script>
 </body>
 </html>

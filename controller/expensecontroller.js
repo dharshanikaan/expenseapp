@@ -27,33 +27,26 @@ const addExpense = [
         let { amount, description, category } = req.body;
         const userId = req.userId;
 
-        // Convert amount to a number
         amount = Number(amount);
-        console.log('Converted amount:', amount); // Log the converted amount
-
         const transaction = await sequelize.transaction();
+
         try {
             const newExpense = await Expense.create({ amount, description, category, userId }, { transaction });
+            console.log('New Expense Created:', newExpense);
 
             const user = await User.findByPk(userId, { transaction });
             if (user) {
-                console.log('Current totalexpense:', user.totalexpense);
-                console.log('Amount to add:', amount);
-                
-                // Check if the amount is a valid number
-                if (!isNaN(amount) && amount >= 0) {
-                    user.totalexpense += amount; // Update total expense
-                    await user.save({ transaction });
-                } else {
-                    throw new Error('Invalid amount for expense.');
-                }
+                console.log('Current totalExpense before update:', user.totalExpense);
+                user.totalExpense += amount; // Use the correct field name
+                await user.save({ transaction });
+                console.log('New totalExpense after update:', user.totalExpense);
             }
 
             await transaction.commit();
             res.status(201).json(newExpense);
         } catch (error) {
             await transaction.rollback();
-            console.error('Error adding expense:', error); // Log full error
+            console.error('Error adding expense:', error);
             res.status(500).json({ message: 'Error adding expense.', error: error.message });
         }
     }
@@ -63,19 +56,30 @@ const deleteExpense = async (req, res) => {
     const { expenseId } = req.body;
     const userId = req.userId;
 
+    const transaction = await sequelize.transaction(); // Start a transaction
     try {
-        const expense = await Expense.findOne({ where: { id: expenseId, userId } });
+        const expense = await Expense.findOne({ where: { id: expenseId, userId }, transaction });
 
         if (!expense) {
             return res.status(404).json({ message: 'Expense not found or user not authorized.' });
         }
 
-        await Expense.destroy({ where: { id: expenseId } });
+        // Retrieve the user to update totalExpense
+        const user = await User.findByPk(userId, { transaction });
+        if (user) {
+            user.totalExpense -= expense.amount; // Subtract the expense amount from totalExpense
+            await user.save({ transaction }); // Save the updated user
+        }
+
+        await Expense.destroy({ where: { id: expenseId }, transaction }); // Delete the expense
+        await transaction.commit(); // Commit the transaction
         res.status(200).json({ message: 'Expense deleted successfully.' });
     } catch (error) {
+        await transaction.rollback(); // Rollback transaction on error
         console.error('Error deleting expense:', error.message);
         res.status(500).json({ message: 'Error deleting expense.', error: error.message });
     }
 };
+
 
 module.exports = { addExpense, getExpenses, deleteExpense };
