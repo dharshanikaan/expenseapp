@@ -1,6 +1,7 @@
 const Razorpay = require('razorpay');
 const Order = require('../models/order');
 const User = require('../models/user');
+require('dotenv').config({ path: '../expenseapppassword/.env' });
 require('dotenv').config();
 
 // Initialize Razorpay
