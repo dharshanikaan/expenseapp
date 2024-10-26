@@ -21,9 +21,9 @@
                 <tr>
                     <th>Date</th>
                     <th>Description</th>
-                    <th>Salary (Income)</th>
-                    <th>Other Expenses</th>
-                    <th>Savings</th>
+                    <th>Category</th>
+                    <th>Income</th>
+                    <th>Expenses</th>
                 </tr>
             </thead>
             <tbody id="report-list"></tbody>
@@ -31,6 +31,7 @@
         <div id="yearly-summary" style="margin-top: 20px;">
             <h3>Yearly Summary</h3>
             <p>Total Income: <span id="total-income">₹0</span></p>
+            <p>Total Expenses: <span id="total-expenses">₹0</span></p>
             <p>Total Savings: <span id="total-savings">₹0</span></p>
         </div>
         <button id="download-button" style="display: none;">Download Report</button>
@@ -45,56 +46,59 @@
         }
 
         function fetchExpensesReport() {
-            fetch('http://localhost:3000/api/expenses/report', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => renderReport(data))
-            .catch(error => console.error('Error fetching expenses report:', error));
-        }
+    const url = `http://localhost:3000/api/expenses/report?timestamp=${new Date().getTime()}`;
+    
+    fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(response => {
+        console.log('Response status:', response.status); // Log response status
+        if (!response.ok) throw new Error('Network response was not ok');
 
-        function renderReport(data) {
-            const reportList = document.querySelector('#report-list');
-            reportList.innerHTML = '';
-            let totalIncome = 0;
-            let totalExpenses = 0;
+        return response.json().then(data => {
+            console.log('Raw response data:', data); // Log raw response data
+            renderReport(data);
+        });
+    })
+    .catch(error => {
+        console.error('Error fetching expenses report:', error);
+    });
+}
 
-            data.forEach(entry => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${entry.date}</td>
-                    <td>${entry.description}</td>
-                    <td>${entry.salary ? '₹' + entry.salary : '₹0'}</td>
-                    <td>${entry.otherExpenses ? '₹' + entry.otherExpenses : '₹0'}</td>
-                    <td>₹${entry.savings}</td>
-                `;
-                reportList.appendChild(row);
 
-                totalIncome += entry.salary || 0;
-                totalExpenses += entry.otherExpenses || 0;
-            });
+function renderReport(data) {
+    const reportList = document.querySelector('#report-list');
+    reportList.innerHTML = '';
 
-            const totalSavings = totalIncome - totalExpenses;
-            document.getElementById('total-income').textContent = '₹' + totalIncome;
-            document.getElementById('total-savings').textContent = '₹' + totalSavings;
+    data.expenses.forEach(entry => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${entry.date}</td>
+            <td>${entry.description}</td>
+            <td>${entry.category}</td>
+            <td>₹${entry.income || 0}</td>
+            <td>₹${entry.expenses || 0}</td>
+        `;
+        reportList.appendChild(row);
+    });
 
-            document.getElementById('download-button').style.display = 'block';
-            document.getElementById('download-button').onclick = () => downloadReport(data);
-        }
+    // Update totals
+    document.getElementById('total-income').textContent = '₹' + data.totalIncome;
+    document.getElementById('total-expenses').textContent = '₹' + data.totalExpenses;
+    document.getElementById('total-savings').textContent = '₹' + (data.totalIncome - data.totalExpenses);
+}
+
 
         function downloadReport(data) {
             const csvContent = "data:text/csv;charset=utf-8,"
-                + "Date,Description,Salary (Income),Other Expenses,Savings\n"
-                + data.map(e => `${e.date},${e.description},${e.salary || 0},${e.otherExpenses || 0},${e.savings}`).join("\n");
+                + "Date,Description,Category,Income,Expenses\n"
+                + data.map(e => `${e.date},${e.description},${e.category},${e.salary || 0},${e.otherExpenses || 0}`).join("\n");
 
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
             link.setAttribute("download", "expenses_report.csv");
-            document.body.appendChild(link); // Required for FF
+            document.body.appendChild(link);
 
             link.click(); // This will download the CSV file
             document.body.removeChild(link); // Cleanup
