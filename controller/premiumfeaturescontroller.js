@@ -1,14 +1,11 @@
-// Import necessary models
-const { models } = require('../util/database'); 
-const User = require('../models/user');
-const { Op } = require('sequelize'); // Keep this if you're using Op elsewhere
+// controller/premiumfeaturescontroller.js
+const { models } = require('../util/database');
 
-// Function to get the leaderboard
 const getLeaderboard = async (req, res) => {
     try {
-        const users = await User.findAll({
-            attributes: ['id', 'name', 'totalExpense'], // Ensure these fields exist in your model
-            order: [['totalExpense', 'DESC']] // Sort by totalExpense in descending order
+        const users = await models.User.findAll({
+            attributes: ['id', 'name', 'totalExpense'],
+            order: [['totalExpense', 'DESC']],
         });
 
         res.status(200).json(users);
@@ -18,5 +15,4 @@ const getLeaderboard = async (req, res) => {
     }
 };
 
-// Exporting both functions
 module.exports = { getLeaderboard };

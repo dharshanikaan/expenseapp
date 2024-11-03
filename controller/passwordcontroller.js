@@ -24,7 +24,7 @@ const forgotPassword = async (req, res) => {
         const request = await ForgotPasswordRequest.create({ userId: user.id });
 
         const resetLink = `http://localhost:3000/password/resetpassword/${request.id}`;
-        const sender = { name: 'Your App Name', email: 'your-email@example.com' };
+        const sender = { name: 'Your App Name', email: 'dharshanikaan@gmail.com' };
         const emailContent = {
             sender,
             to: [{ email }],
