@@ -1,8 +1,8 @@
 // Import necessary models
+const { models } = require('../util/database'); 
 const User = require('../models/user');
-const Expense = require('../models/expense'); // Adjust the path as needed
-const { Op } = require('sequelize');
-const sequelize = require('sequelize');
+const { Op } = require('sequelize'); // Keep this if you're using Op elsewhere
+
 // Function to get the leaderboard
 const getLeaderboard = async (req, res) => {
     try {
@@ -18,24 +18,5 @@ const getLeaderboard = async (req, res) => {
     }
 };
 
-// Function to get sorted expenses (unchanged)
-const getExpensesReport = async (req, res) => {
-    try {
-        // Fetch expenses from the database (replace with your actual query)
-        const expenses = await Expenses.find(); // Example query
-        const totalIncome = expenses.reduce((sum, entry) => sum + (entry.income || 0), 0);
-        const totalExpenses = expenses.reduce((sum, entry) => sum + (entry.expenses || 0), 0);
-        const totalSavings = totalIncome - totalExpenses;
-
-        res.set('Cache-Control', 'no-store'); // Disable caching
-        console.log('Fetched expenses:', expenses); // Log fetched expenses
-        res.status(200).json({ expenses, totalIncome, totalExpenses, totalSavings });
-    } catch (error) {
-        console.error('Error fetching expenses report:', error.message);
-        res.status(500).json({ message: 'Error fetching expenses report.' });
-    }
-};
-
-
 // Exporting both functions
-module.exports = { getLeaderboard, getExpensesReport};
+module.exports = { getLeaderboard };

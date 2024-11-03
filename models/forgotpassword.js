@@ -1,25 +1,23 @@
-const Sequelize = require('sequelize');
-const sequelize = require('../util/database');
+module.exports = (sequelize, DataTypes) => {
+    const ForgotPasswordRequest = sequelize.define('ForgotPasswordRequest', {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            primaryKey: true,
+        },
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        isActive: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true,
+        },
+    });
 
-const ForgotPasswordRequest = sequelize.define('ForgotPasswordRequest', {
-    id: {
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4, // Automatically generate a UUID
-        primaryKey: true,
-    },
-    userId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-    },
-    isActive: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: true,
-    },
-});
+    ForgotPasswordRequest.associate = (models) => {
+        ForgotPasswordRequest.belongsTo(models.User, { foreignKey: 'userId' });
+    };
 
-// Establish association with User model
-ForgotPasswordRequest.associate = (models) => {
-    ForgotPasswordRequest.belongsTo(models.User, { foreignKey: 'userId' });
+    return ForgotPasswordRequest;
 };
-
-module.exports = ForgotPasswordRequest;

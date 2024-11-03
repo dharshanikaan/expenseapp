@@ -1,24 +1,25 @@
-const Sequelize = require('sequelize');
-const sequelize = require('../util/database');
+module.exports = (sequelize, DataTypes) => {
+    const Order = sequelize.define('Order', {
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true,
+        },
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        orderId: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        status: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+    });
 
-const Order = sequelize.define('Order', {
-    id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-    },
-    userId: {
-        type:Sequelize.INTEGER,
-        allowNull: false,
-    },
-    orderId: {
-        type:Sequelize.STRING,
-        allowNull: false,
-    },
-    status: {
-        type: Sequelize.STRING,
-        allowNull: false,
-    },
-});
+    // You can add associations here if necessary
 
-module.exports = Order;
+    return Order;
+};

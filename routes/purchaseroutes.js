@@ -1,5 +1,5 @@
 const express = require('express');
-const { createOrder, handlePaymentSuccess } = require('../controller/purchasecontroller');
+const { createOrder, handlePaymentSuccess } = require('../controller/purchasecontroller'); // Ensure this path is correct
 const authenticateToken = require('../middleware/authenticatetoken');
 
 const router = express.Router();

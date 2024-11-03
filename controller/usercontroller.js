@@ -1,4 +1,5 @@
-const User = require('../models/user');
+const { models } = require('../util/database'); // Correct import
+const User = models.User; // Use the imported User model
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');

@@ -1,5 +1,6 @@
 require('dotenv').config({ path: '../expenseapppassword/.env' });
 const express = require('express');
+const { sequelize } = require('./util/database');
 const bodyParser = require('body-parser');
 const path = require('path');
 const cors = require('cors');
@@ -8,7 +9,7 @@ const expenseRoutes = require('./routes/expenseroutes');
 const purchaseRoutes = require('./routes/purchaseroutes');
 const premiumFeaturesRoutes = require('./routes/premiumfeaturesroutes');
 const passwordRoutes = require('./routes/password');
-const sequelize = require('./util/database');
+
 
 const app = express();
 app.use(cors());

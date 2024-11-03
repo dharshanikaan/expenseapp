@@ -10,7 +10,7 @@
             right: 20px;
             top: 20px;
         }
-        #leaderboard-button {
+        #leaderboard-button, #download-button {
             display: none; /* Hide by default */
             margin-left: 10px;
         }
@@ -19,11 +19,14 @@
 <body>
     <h1>Expenses</h1>
     <button class="premium-button" id="buy-premium">Buy Premium Membership</button>
+    
     <form id="expense-form">
         <label for="amount">Amount:</label><br>
         <input type="number" id="amount" required><br><br>
+        
         <label for="description">Description:</label><br>
         <input type="text" id="description" required><br><br>
+        
         <label for="category">Category:</label><br>
         <select id="category" required>
             <option value="" disabled selected>Select a category</option>
@@ -34,16 +37,19 @@
             <option value="Entertainment">Entertainment</option>
             <option value="Other">Other</option>
         </select><br><br>
+        
         <input type="submit" value="Add Expense">
     </form>
+    
     <div id="message"></div>
     <button id="leaderboard-button">View Leaderboard</button>
+    <button id="download-button">Download Expenses</button>
+    
     <h2>Your Expenses</h2>
     <ul id="expense-list"></ul>
 
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
-        // Your JavaScript logic for expenses
         const loadUserStatus = async () => {
             const token = localStorage.getItem('token');
             const response = await fetch('/api/users/status', {
@@ -56,6 +62,7 @@
                 const messageDiv = document.getElementById('message');
                 messageDiv.textContent = data.isPremium ? 'You are a Premium Member!' : 'You are a Regular Member.';
                 document.getElementById('leaderboard-button').style.display = data.isPremium ? 'inline' : 'none';
+                document.getElementById('download-button').style.display = data.isPremium ? 'inline' : 'none';
             }
         };
 
@@ -201,9 +208,27 @@
 
         // Load leaderboard on button click
         document.getElementById('leaderboard-button').addEventListener('click', () => {
-        window.location.href = '/leaderboard'; // Redirect to the leaderboard route
-});
+            window.location.href = '/leaderboard'; // Redirect to the leaderboard route
+        });
+
+        // Download expenses functionality
+        document.getElementById('download-button').addEventListener('click', async () => {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/expenses/download', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                window.open(data.fileURL, '_blank'); // Open the download link in a new tab
+            } else {
+                console.error("Download failed:", data.message);
+                document.getElementById('message').textContent = data.message;
+            }
+        });
     </script>
 </body>
 </html>
-

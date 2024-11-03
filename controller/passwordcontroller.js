@@ -1,10 +1,11 @@
-const User= require('../models/user');
-const  ForgotPasswordRequest = require('../models/forgotpassword'); // Ensure correct paths
+const { models } = require('../util/database'); // Ensure correct import
+const User = models.User;
+const ForgotPasswordRequest = models.ForgotPasswordRequest; // Get from models
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 
-// Initialize the Sendinblue API client
+// Initialize Sendinblue API client
 const apiKey = new SibApiV3Sdk.ApiClient();
 apiKey.authentications['api-key'].apiKey = process.env.API_KEY;
 SibApiV3Sdk.ApiClient.instance = apiKey;
@@ -23,7 +24,7 @@ const forgotPassword = async (req, res) => {
         const request = await ForgotPasswordRequest.create({ userId: user.id });
 
         const resetLink = `http://localhost:3000/password/resetpassword/${request.id}`;
-        const sender = { name: 'Your App Name', email: 'dharshanikaan@gmail.com' };
+        const sender = { name: 'Your App Name', email: 'your-email@example.com' };
         const emailContent = {
             sender,
             to: [{ email }],
@@ -51,7 +52,7 @@ const resetPassword = async (req, res) => {
         }
 
         const user = await User.findByPk(request.userId);
-        const hashedPassword = await bcrypt.hash(newPassword, 10); // Hash the new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
         user.password = hashedPassword;
         await user.save();
 
@@ -65,4 +66,4 @@ const resetPassword = async (req, res) => {
     }
 };
 
-module.exports = { forgotPassword, resetPassword};
+module.exports = { forgotPassword, resetPassword };
