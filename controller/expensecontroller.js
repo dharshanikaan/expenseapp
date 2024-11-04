@@ -33,15 +33,17 @@ const downloadExpense = async (req, res) => {
         }
 
         const expenses = await user.getExpenses(); // Ensure `getExpenses` is defined
-        if (!expenses) {
+        if (!expenses || expenses.length === 0) {
             return res.status(404).json({ message: 'No expenses found.' });
         }
 
         const stringifiedExpenses = JSON.stringify(expenses);
-        const filename = 'Expense.txt';
+        const now = new Date();
+        const formattedDate = now.toISOString().slice(0, 10); // Format date as YYYY-MM-DD
+        const filename = `Expenses-${formattedDate}.txt`; // Create a unique filename
 
         const fileURL = await uploadToS3(stringifiedExpenses, filename);
-        res.status(200).json({ fileURL, success: true });
+        res.status(200).json({ fileURL, filename, success: true }); // Return the filename as well
     } catch (error) {
         console.error("Failed to upload file:", error);
         res.status(500).json({ success: false, message: "Failed to upload expenses." });
