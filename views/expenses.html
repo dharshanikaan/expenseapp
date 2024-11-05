@@ -14,6 +14,9 @@
             display: none; /* Hide by default */
             margin-left: 10px;
         }
+        #downloaded-files-section {
+            display: none; /* Initially hide the downloaded files section */
+        }
     </style>
 </head>
 <body>
@@ -47,11 +50,73 @@
     
     <h2>Your Expenses</h2>
     <ul id="expense-list"></ul>
-    <h2>Downloaded Files</h2>
-    <ul id="downloaded-files-list"></ul>
+
+    <!-- Downloaded Files Section (Visible only for Premium Members) -->
+    <div id="downloaded-files-section">
+        <h2>Downloaded Files</h2>
+        <ul id="downloaded-files-list"></ul>
+    </div>
 
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
+        // Load downloaded files from localStorage
+        const loadDownloadedFiles = () => {
+            const downloadedFiles = JSON.parse(localStorage.getItem('downloadedFiles')) || [];
+            const downloadedFilesList = document.getElementById('downloaded-files-list');
+            downloadedFilesList.innerHTML = '';  // Clear the current list
+
+            downloadedFiles.forEach(file => {
+                const li = document.createElement('li');
+                li.textContent = file;
+                downloadedFilesList.appendChild(li);
+            });
+        };
+
+        // Call this function on page load
+        window.onload = () => {
+            loadUserStatus();
+            loadExpenses();
+            loadDownloadedFiles();  // Load the downloaded files from localStorage
+        };
+
+        // Download expenses functionality
+        document.getElementById('download-button').addEventListener('click', async () => {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/expenses/download', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                // Log the file URL to the console
+                console.log("Downloaded file URL:", data.fileURL);
+
+                // Create a unique filename based on the current date and the original filename
+                const now = new Date();
+                const formattedDate = now.toISOString().slice(0, 10); // Format date as YYYY-MM-DD
+                const uniqueFilename = `${formattedDate}-${data.filename}`; // Assuming data.filename exists
+
+                // Update the display of downloaded files for premium users
+                const listItem = document.createElement('li');
+                listItem.textContent = uniqueFilename; // Display the unique filename
+                document.getElementById('downloaded-files-list').appendChild(listItem); // Append to the list
+
+                // Store in localStorage to persist on page reload
+                let downloadedFiles = JSON.parse(localStorage.getItem('downloadedFiles')) || [];
+                downloadedFiles.push(uniqueFilename);
+                localStorage.setItem('downloadedFiles', JSON.stringify(downloadedFiles));
+
+                // Open the download link in a new tab
+                window.open(data.fileURL, '_blank');
+            } else {
+                console.error("Download failed:", data.message);
+                document.getElementById('message').textContent = data.message;
+            }
+        });
+
         const loadUserStatus = async () => {
             const token = localStorage.getItem('token');
             const response = await fetch('/api/users/status', {
@@ -65,6 +130,7 @@
                 messageDiv.textContent = data.isPremium ? 'You are a Premium Member!' : 'You are a Regular Member.';
                 document.getElementById('leaderboard-button').style.display = data.isPremium ? 'inline' : 'none';
                 document.getElementById('download-button').style.display = data.isPremium ? 'inline' : 'none';
+                document.getElementById('downloaded-files-section').style.display = data.isPremium ? 'block' : 'none';  // Show/Hide the downloaded files section
             }
         };
 
@@ -165,25 +231,26 @@
 
             const options = {
                 key: 'rzp_test_bo86XocxRgynHk', // Your Razorpay key ID
-                amount: orderData.amount,
+                amount: orderData.amount, // Order amount
                 currency: 'INR',
-                name: 'Expense Tracker',
-                order_id: orderData.orderId,
+                order_id: orderData.id,
                 handler: async function (response) {
-                    const paymentResponse = await fetch('/api/premium/success', {
+                    const paymentResponse = await fetch('/api/premium/verify', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${token}`,
                         },
                         body: JSON.stringify({
-                            orderId: orderData.orderId,
                             paymentId: response.razorpay_payment_id,
+                            orderId: response.razorpay_order_id,
+                            signature: response.razorpay_signature,
                         }),
                     });
 
+                    const paymentData = await paymentResponse.json();
                     if (paymentResponse.ok) {
-                        document.getElementById('message').textContent = 'Payment successful! You are now a Premium Member!';
+                        document.getElementById('message').textContent = 'You are now a Premium Member!';
                         loadUserStatus(); // Refresh user status
                     } else {
                         document.getElementById('message').textContent = 'Payment failed.';
@@ -202,51 +269,11 @@
             razorpay.open();
         });
 
-        // Load expenses and user status on page load
-        window.onload = () => {
-            loadUserStatus();
-            loadExpenses();
-        };
-
         // Load leaderboard on button click
         document.getElementById('leaderboard-button').addEventListener('click', () => {
             window.location.href = '/leaderboard'; // Redirect to the leaderboard route
         });
-
-        // Download expenses functionality
-      // Inside your download-button event listener
-      document.getElementById('download-button').addEventListener('click', async () => {
-    const token = localStorage.getItem('token');
-    const response = await fetch('/api/expenses/download', {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-        },
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-        // Log the file URL to the console
-        console.log("Downloaded file URL:", data.fileURL);
-
-        // Create a unique filename based on the current date and the original filename
-        const now = new Date();
-        const formattedDate = now.toISOString().slice(0, 10); // Format date as YYYY-MM-DD
-        const uniqueFilename = `${formattedDate}-${data.filename}`; // Assuming data.filename exists
-
-        // Update the display of downloaded files for premium users
-        const listItem = document.createElement('li');
-        listItem.textContent = uniqueFilename; // Display the unique filename
-        document.getElementById('downloaded-files-list').appendChild(listItem); // Append to the list
-
-        // Open the download link in a new tab
-        window.open(data.fileURL, '_blank');
-    } else {
-        console.error("Download failed:", data.message);
-        document.getElementById('message').textContent = data.message;
-    }
-});
-
     </script>
 </body>
 </html>
+
