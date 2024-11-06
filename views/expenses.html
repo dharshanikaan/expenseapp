@@ -208,39 +208,54 @@
         });
 
         // Download expenses functionality for premium users
-        document.getElementById('download-button').addEventListener('click', async () => {
-            const token = localStorage.getItem('token');
-            const response = await fetch('/api/expenses/download', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
+  
+document.getElementById('download-button').addEventListener('click', async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch('/api/expenses/download', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
 
-            const data = await response.json();
-            if (response.ok) {
-                // Log the file URL to the console
-                console.log("Downloaded file URL:", data.fileURL);
+    const data = await response.json();
+    if (response.ok) {
+        // Log the file URL to the console
+        console.log("Downloaded file URL:", data.fileURL);
 
-                // Create a unique filename based on the current date and the original filename
-                const now = new Date();
-                const formattedDate = now.toISOString().slice(0, 10); // Format date as YYYY-MM-DD
-                const uniqueFilename = `${formattedDate}-${data.filename}`; // Assuming data.filename exists
+        // Ensure the filename is part of the data returned from the server (which includes userId)
+        const filename = data.filename;  // e.g., "Expenses-UserId-1-2024-11-06.txt"
+        const fileUrl = data.fileURL;  // e.g., "https://expensetractor.s3.amazonaws.com/Expenses-UserId-1-2024-11-06.txt"
 
-                // Update the display of downloaded files for premium users
-                const listItem = document.createElement('li');
-                listItem.textContent = uniqueFilename; // Display the unique filename
-                document.getElementById('downloaded-files-list').appendChild(listItem); // Append to the list
+        // Create a temporary <a> element for the download
+        const downloadLink = document.createElement('a');
+        downloadLink.href = fileUrl;
+        downloadLink.download = filename;  // Use the filename returned from the server
+        downloadLink.style.display = 'none';  // Hide the element
 
-                // Open the download link in a new tab
-                window.open(data.fileURL, '_blank');
-            } else {
-                console.error("Download failed:", data.message);
-                document.getElementById('message').textContent = data.message;
-            }
-        });
+        // Append the <a> to the document body (it doesn't need to be visible)
+        document.body.appendChild(downloadLink);
 
-        // Load user status and expenses on page load
+        // Trigger the download by programmatically clicking the link
+        downloadLink.click();
+
+        // Remove the temporary <a> element after the download is triggered
+        document.body.removeChild(downloadLink);
+
+        // Display the file URL and filename in the "Downloaded Files" section
+        const listItem = document.createElement('li');
+        listItem.textContent = ` ${filename} (UserId: ${filename.split('-')[2]})`; // Extract UserId from filename
+        document.getElementById('downloaded-files-list').appendChild(listItem); // Append to the list
+
+        // Optionally, log the download information
+        console.log(`Download triggered for: ${filename}`);
+        console.log(`File URL: ${fileUrl}`);
+    } else {
+        console.error("Download failed:", data.message);
+        document.getElementById('message').textContent = data.message;
+    }
+});
+  // Load user status and expenses on page load
         window.onload = () => {
             loadUserStatus();
             loadExpenses();

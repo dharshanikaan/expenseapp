@@ -1,15 +1,16 @@
-const { body, validationResult } = require('express-validator');
 const AWS = require('aws-sdk');
-const { models, sequelize } = require('../util/database'); // Ensure sequelize and models are imported correctly
+const { models, sequelize } = require('../util/database'); // Ensure both are imported correctly
+const User = require('../models/user');
+const Expense = require('../models/expense')
+const { body, validationResult } = require('express-validator');
 
-// Initialize AWS S3
+
 const s3 = new AWS.S3({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: 'us-west-2', // Adjust as needed
 });
 
-// Get all expenses for a user
 const getExpenses = async (req, res) => {
     const userId = req.userId;
 
@@ -22,21 +23,61 @@ const getExpenses = async (req, res) => {
     }
 };
 
-// Download expenses as a file (upload to S3)
 const downloadExpense = async (req, res) => {
-    const userId = req.userId;
-
     try {
-        // Call the service to handle file download and get the file URL
-        const fileURL = await downloadExpensesToFile(userId);
-        res.status(200).json({ fileURL, success: true });
+        const userId = req.userId; // Ensure this is set by authenticateToken
+        const user = await models.User.findByPk(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        const expenses = await user.getExpenses(); // Ensure `getExpenses` is defined
+        if (!expenses || expenses.length === 0) {
+            return res.status(404).json({ message: 'No expenses found.' });
+        }
+
+        const stringifiedExpenses = JSON.stringify(expenses);
+        const now = new Date();
+        const formattedDate = now.toISOString().slice(0, 10); // Format date as YYYY-MM-DD
+        const filename = `Expenses-UserId-${userId}-${formattedDate}.txt`; // Create a filename with UserId
+
+        // Upload to S3 and get the file URL
+        const fileURL = await uploadToS3(stringifiedExpenses, filename);
+
+        res.status(200).json({
+            fileURL,
+            filename,
+            success: true,
+            message: 'File uploaded successfully.'
+        }); // Return fileURL and filename
     } catch (error) {
-        console.error('Failed to upload file:', error);
-        res.status(500).json({ success: false, message: 'Failed to upload expenses.' });
+        console.error("Failed to upload file:", error);
+        res.status(500).json({ success: false, message: "Failed to upload expenses." });
     }
 };
 
-// Add a new expense
+
+async function uploadToS3(data, filename) {
+    const BUCKET_NAME = "expensetractor";
+
+    const params = {
+        Bucket: BUCKET_NAME,
+        Key: filename,
+        Body: data,
+        ACL: 'public-read',
+    };
+
+    try {
+        const s3Response = await s3.putObject(params).promise();
+        console.log("Upload successful", s3Response);
+        return `https://${BUCKET_NAME}.s3.amazonaws.com/${filename}`;
+    } catch (err) {
+        console.error("Error uploading to S3", err);
+        throw err;
+    }
+}
+
 const addExpense = [
     body('amount').isNumeric().withMessage('Amount is required and must be a number.'),
     body('description').notEmpty().withMessage('Description is required.'),
@@ -47,30 +88,22 @@ const addExpense = [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { amount, description, category } = req.body;
+        let { amount, description, category } = req.body;
         const userId = req.userId;
 
-        // Validate expense amount
-        if (amount <= 0 || amount > 1000000) {
-            return res.status(400).json({ message: 'Invalid amount. Must be positive and within a reasonable range.' });
-        }
-
-        // Validate category and description
-        if (!category || !description) {
-            return res.status(400).json({ message: 'Category and description are required.' });
-        }
-
+        amount = Number(amount);
         const transaction = await sequelize.transaction();
 
         try {
-            // Create new expense record
             const newExpense = await models.Expense.create({ amount, description, category, userId }, { transaction });
+            console.log('New Expense Created:', newExpense);
 
-            // Update user's total expenses
             const user = await models.User.findByPk(userId, { transaction });
             if (user) {
+                console.log('Current totalExpense before update:', user.totalExpense);
                 user.totalExpense += amount;
                 await user.save({ transaction });
+                console.log('New totalExpense after update:', user.totalExpense);
             }
 
             await transaction.commit();
@@ -83,7 +116,6 @@ const addExpense = [
     }
 ];
 
-// Delete an expense
 const deleteExpense = async (req, res) => {
     const { expenseId } = req.body;
     const userId = req.userId;
@@ -109,48 +141,6 @@ const deleteExpense = async (req, res) => {
         await transaction.rollback();
         console.error('Error deleting expense:', error.message);
         res.status(500).json({ message: 'Error deleting expense.', error: error.message });
-    }
-};
-
-// Service Function to Download Expenses as a File
-const downloadExpensesToFile = async (userId) => {
-    const user = await models.User.findByPk(userId);
-    if (!user) throw new Error('User not found');
-
-    const expenses = await user.getExpenses();
-    if (!expenses || expenses.length === 0) throw new Error('No expenses found.');
-
-    // Create a JSON string from the expenses
-    const expensesData = JSON.stringify(expenses, null, 2); // Indented for better readability
-
-    const now = new Date();
-    const formattedDate = now.toISOString().slice(0, 10);  // Format date as YYYY-MM-DD
-    const filename = `Expenses-${userId}-${formattedDate}.txt`; // .txt file to store expenses as JSON
-
-    return uploadToS3(expensesData, filename);
-};
-
-// Upload file to S3 with public-read ACL
-const uploadToS3 = async (data, filename) => {
-    const BUCKET_NAME = "expensetracker"; // Replace with your actual S3 bucket name
-
-    const params = {
-        Bucket: BUCKET_NAME,
-        Key: filename,
-        Body: data,
-        ACL: 'public-read', // File will be publicly accessible
-    };
-
-    try {
-        const s3Response = await s3.putObject(params).promise();
-        console.log("Upload successful", s3Response);
-
-        // Generate a public URL to access the file
-        const fileURL = `https://${BUCKET_NAME}.s3.amazonaws.com/${filename}`;
-        return fileURL;
-    } catch (err) {
-        console.error("Error uploading to S3", err);
-        throw new Error('Failed to upload to S3');
     }
 };
 
