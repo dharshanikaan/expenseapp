@@ -84,7 +84,7 @@
 
             expenses.forEach(expense => {
                 const li = document.createElement('li');
-                li.textContent = `${expense.description} - ₹${expense.amount} [${expense.category}]`;
+                li.textContent = `${expense.description} - ₹${expense.amount} [${expense.amount} [${expense.category}]`;
                 const deleteButton = document.createElement('button');
                 deleteButton.textContent = 'Delete';
                 deleteButton.onclick = () => deleteExpense(expense.id);
@@ -208,64 +208,74 @@
         });
 
         // Download expenses functionality for premium users
-  
-document.getElementById('download-button').addEventListener('click', async () => {
-    const token = localStorage.getItem('token');
-    const response = await fetch('/api/expenses/download', {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-        },
-    });
+        document.getElementById('download-button').addEventListener('click', async () => {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/expenses/download', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
 
-    const data = await response.json();
-    if (response.ok) {
-        // Log the file URL to the console
-        console.log("Downloaded file URL:", data.fileURL);
+            const data = await response.json();
+            if (response.ok) {
+                const filename = data.filename;
+                const fileUrl = data.fileURL;
 
-        // Ensure the filename is part of the data returned from the server (which includes userId)
-        const filename = data.filename;  // e.g., "Expenses-UserId-1-2024-11-06.txt"
-        const fileUrl = data.fileURL;  // e.g., "https://expensetractor.s3.amazonaws.com/Expenses-UserId-1-2024-11-06.txt"
+                // Create a temporary <a> element for the download
+                const downloadLink = document.createElement('a');
+                downloadLink.href = fileUrl;
+                downloadLink.download = filename;
+                downloadLink.style.display = 'none';
 
-        // Create a temporary <a> element for the download
-        const downloadLink = document.createElement('a');
-        downloadLink.href = fileUrl;
-        downloadLink.download = filename;  // Use the filename returned from the server
-        downloadLink.style.display = 'none';  // Hide the element
+                // Append to document and trigger the download
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
 
-        // Append the <a> to the document body (it doesn't need to be visible)
-        document.body.appendChild(downloadLink);
+                // Save the downloaded file details to localStorage
+                const downloadedFiles = JSON.parse(localStorage.getItem('downloadedFiles')) || [];
+                downloadedFiles.push({ filename, fileUrl });
+                localStorage.setItem('downloadedFiles', JSON.stringify(downloadedFiles));
 
-        // Trigger the download by programmatically clicking the link
-        downloadLink.click();
+                // Display the downloaded file in the list
+                displayDownloadedFiles();
+            } else {
+                console.error("Download failed:", data.message);
+                document.getElementById('message').textContent = data.message;
+            }
+        });
 
-        // Remove the temporary <a> element after the download is triggered
-        document.body.removeChild(downloadLink);
+        // Function to display the downloaded files list from localStorage
+        const displayDownloadedFiles = () => {
+            const downloadedFiles = JSON.parse(localStorage.getItem('downloadedFiles')) || [];
+            const downloadedFilesList = document.getElementById('downloaded-files-list');
+            downloadedFilesList.innerHTML = ''; // Clear the list
 
-        // Display the file URL and filename in the "Downloaded Files" section
-        const listItem = document.createElement('li');
-        listItem.textContent = ` ${filename} (UserId: ${filename.split('-')[2]})`; // Extract UserId from filename
-        document.getElementById('downloaded-files-list').appendChild(listItem); // Append to the list
+            downloadedFiles.forEach(file => {
+                if (file.filename) {
+                    const listItem = document.createElement('li');
+                    // Ensure that the filename is correctly split and avoid errors
+                    const userId = file.filename.split('-')[2]; // Extract UserId from filename
+                    listItem.textContent = `${file.filename} (UserId: ${userId})`;
+                    downloadedFilesList.appendChild(listItem);
+                }
+            });
+        };
 
-        // Optionally, log the download information
-        console.log(`Download triggered for: ${filename}`);
-        console.log(`File URL: ${fileUrl}`);
-    } else {
-        console.error("Download failed:", data.message);
-        document.getElementById('message').textContent = data.message;
-    }
-});
-  // Load user status and expenses on page load
+        // Load user status, expenses, and downloaded files on page load
         window.onload = () => {
             loadUserStatus();
             loadExpenses();
+            displayDownloadedFiles(); // Load downloaded files from localStorage
         };
 
         // Load leaderboard on button click
         document.getElementById('leaderboard-button').addEventListener('click', () => {
             window.location.href = '/leaderboard'; // Redirect to the leaderboard route
         });
-
     </script>
 </body>
+</html>
+
 </html>
