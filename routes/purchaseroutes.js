@@ -4,7 +4,7 @@ const authenticateToken = require('../middleware/authenticatetoken');
 
 const router = express.Router();
 
-router.post('/order', authenticateToken, createOrder);
-router.post('/success', authenticateToken, handlePaymentSuccess);
+router.post('/order', authenticateToken, createOrder); // Protect with authenticateToken middleware
+router.post('/success', authenticateToken, handlePaymentSuccess); // Protect with authenticateToken middleware
 
 module.exports = router;

@@ -10,9 +10,6 @@
     <h1>Buy Premium Membership</h1>
     <button id="buyPremiumBtn">Buy Premium</button>
 
-    <!-- Loading Spinner -->
-    <div id="loadingSpinner" style="display:none;">Processing...</div>
-
     <script>
         document.getElementById('buyPremiumBtn').addEventListener('click', async () => {
             const token = localStorage.getItem('token');
@@ -20,9 +17,6 @@
                 alert('Please log in first.');
                 return;
             }
-
-            // Show loading spinner while processing the payment
-            document.getElementById('loadingSpinner').style.display = 'block';
 
             try {
                 const response = await fetch('/api/premium/order', {
@@ -49,25 +43,20 @@
                                 paymentId: paymentResponse.razorpay_payment_id
                             };
 
-                            try {
-                                const paymentResponse = await fetch('/api/premium/success', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Authorization': `Bearer ${token}`,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify(paymentData)
-                                });
+                            const paymentResponse = await fetch('/api/premium/success', {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(paymentData)
+                            });
 
-                                if (paymentResponse.ok) {
-                                    alert('Payment successful! Redirecting to expenses...');
-                                    window.location.href = '/expenses';
-                                } else {
-                                    alert('Payment failed. Please try again.');
-                                }
-                            } catch (error) {
-                                console.error('Error verifying payment:', error);
-                                alert('Error occurred while verifying payment. Please try again.');
+                            if (paymentResponse.ok) {
+                                alert('Payment successful! Redirecting to expenses...');
+                                window.location.href = '/expenses';
+                            } else {
+                                alert('Payment failed. Please try again.');
                             }
                         },
                         theme: {
@@ -83,12 +72,9 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error occurred while creating order.');
-            } finally {
-                // Hide loading spinner once the payment process is complete
-                document.getElementById('loadingSpinner').style.display = 'none';
             }
         });
     </script>
 </body>
-</html>
->
+
+

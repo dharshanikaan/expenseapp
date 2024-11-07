@@ -14,12 +14,6 @@
             display: none; /* Hide by default */
             margin-left: 10px;
         }
-        #pagination-controls {
-            margin-top: 20px;
-        }
-        #pagination-controls button {
-            margin: 0 5px;
-        }
     </style>
 </head>
 <body>
@@ -54,27 +48,11 @@
     <h2>Your Expenses</h2>
     <ul id="expense-list"></ul>
     
-    <div id="pagination-controls">
-        <button id="prev-page" onclick="goToPage(currentPage - 1)">Previous</button>
-        <span id="current-page">Page: 1</span>
-        <button id="next-page" onclick="goToPage(currentPage + 1)">Next</button>
-        <label for="page-size">Items per page:</label>
-        <select id="page-size" onchange="changePageSize()">
-            <option value="5">5</option>
-            <option value="10" selected>10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-        </select>
-    </div>
-    
     <h2>Downloaded Files</h2>
     <ul id="downloaded-files-list"></ul>
 
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
-        let currentPage = 1; // Start from the first page
-        let pageSize = 10; // Default page size
-
         // Helper function to check and load user status
         const loadUserStatus = async () => {
             const token = localStorage.getItem('token');
@@ -92,61 +70,28 @@
             }
         };
 
-        // Fetch and display user's expenses with pagination
-        const loadExpenses = async (page, pageSize) => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`/api/expenses?page=${page}&pageSize=${pageSize}`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                });
+        // Fetch and display user's expenses
+        const loadExpenses = async () => {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/expenses', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+            const expenses = await response.json();
+            const expenseList = document.getElementById('expense-list');
+            expenseList.innerHTML = '';
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch expenses');
-                }
-
-                const data = await response.json();
-                const expenses = data.expenses;
-
-                if (Array.isArray(expenses)) {
-                    const expenseList = document.getElementById('expense-list');
-                    expenseList.innerHTML = '';
-
-                    expenses.forEach(expense => {
-                        const li = document.createElement('li');
-                        li.textContent = `${expense.description} - ₹${expense.amount} [${expense.category}]`;
-                        const deleteButton = document.createElement('button');
-                        deleteButton.textContent = 'Delete';
-                        deleteButton.onclick = () => deleteExpense(expense.id);
-                        li.appendChild(deleteButton);
-                        expenseList.appendChild(li);
-                    });
-
-                    document.getElementById('current-page').textContent = `Page: ${currentPage}`;
-                } else {
-                    console.error("API response is not an array:", expenses);
-                    document.getElementById('message').textContent = "Failed to load expenses. Please try again later.";
-                }
-            } catch (error) {
-                console.error("Error loading expenses:", error);
-                document.getElementById('message').textContent = "An error occurred while loading expenses. Please try again.";
-            }
-        };
-
-        // Pagination handler (Go to previous/next page)
-        const goToPage = (page) => {
-            if (page < 1) return; // Prevent going to negative pages
-            currentPage = page;
-            loadExpenses(currentPage, pageSize); // Reload expenses for the selected page
-        };
-
-        // Change page size handler
-        const changePageSize = () => {
-            pageSize = parseInt(document.getElementById('page-size').value);
-            currentPage = 1; // Reset to the first page when page size is changed
-            loadExpenses(currentPage, pageSize); // Reload expenses with the new page size
+            expenses.forEach(expense => {
+                const li = document.createElement('li');
+                li.textContent = `${expense.description} - ₹${expense.amount} [${expense.category}]`;
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteExpense(expense.id);
+                li.appendChild(deleteButton);
+                expenseList.appendChild(li);
+            });
         };
 
         // Delete an expense
@@ -166,7 +111,7 @@
 
             if (response.ok) {
                 messageDiv.textContent = 'Expense deleted successfully!';
-                loadExpenses(currentPage, pageSize); // Refresh the expense list
+                loadExpenses(); // Refresh the expense list
             } else {
                 messageDiv.textContent = data.message;
             }
@@ -195,7 +140,7 @@
 
                 if (response.ok) {
                     messageDiv.textContent = 'Expense added successfully!';
-                    loadExpenses(currentPage, pageSize); // Refresh the expense list
+                    loadExpenses(); // Refresh the expense list
                 } else {
                     messageDiv.textContent = data.message;
                 }
@@ -205,22 +150,30 @@
             }
         });
 
+        // Premium Membership Purchase Handler
         document.getElementById('buy-premium').addEventListener('click', async () => {
             const token = localStorage.getItem('token');
 
+            if (!token) {
+                document.getElementById('message').textContent = 'Please log in first.';
+                return;
+            }
+
             try {
                 const response = await fetch('/api/premium/purchase/order', {
-                method: 'POST',
-                body: JSON.stringify({ amount: 50000 }), // Example payload
-                headers: { 'Content-Type': 'application/json' }
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
                 });
 
-                if (!orderResponse.ok) {
-                    const errorData = await orderResponse.text();
-                    throw new Error(errorData);
-                }
+                const orderData = await response.json();
 
-                const orderData = await orderResponse.json();
+                if (!response.ok) {
+                    document.getElementById('message').textContent = orderData.message;
+                    return;
+                }
 
                 const options = {
                     key: 'rzp_test_bo86XocxRgynHk', // Your Razorpay key ID
@@ -228,24 +181,33 @@
                     currency: 'INR',
                     name: 'Expense Tracker',
                     order_id: orderData.orderId,
-                    handler: async function (response) {
-                        const paymentResponse = await fetch('/api/premium/success', {
+                    handler: async function (paymentResponse) {
+                        const paymentVerificationResponse = await fetch('/api/premium/purchase/verify', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Authorization': `Bearer ${token}`,
                             },
                             body: JSON.stringify({
-                                orderId: orderData.orderId,
-                                paymentId: response.razorpay_payment_id,
+                                order_id: orderData.orderId,
+                                payment_id: paymentResponse.razorpay_payment_id,
+                                signature: paymentResponse.razorpay_signature,
                             }),
                         });
 
-                        if (paymentResponse.ok) {
-                            document.getElementById('message').textContent = 'Payment successful! You are now a Premium Member!';
-                            loadUserStatus();
+                        if (!paymentVerificationResponse.ok) {
+                            const errorText = await paymentVerificationResponse.text();
+                            console.error('Error verifying payment:', errorText);
+                            document.getElementById('message').textContent = 'Error verifying payment. Please try again later.';
+                            return;
+                        }
+
+                        const paymentVerificationData = await paymentVerificationResponse.json();
+                        if (paymentVerificationResponse.ok) {
+                            document.getElementById('message').textContent = 'Premium purchase successful!';
+                            loadUserStatus(); // Update user status
                         } else {
-                            document.getElementById('message').textContent = 'Payment failed.';
+                            document.getElementById('message').textContent = paymentVerificationData.message;
                         }
                     },
                     prefill: {
@@ -259,10 +221,9 @@
 
                 const razorpay = new Razorpay(options);
                 razorpay.open();
-
             } catch (error) {
                 console.error('Error:', error);
-                document.getElementById('message').textContent = 'Failed to create order or process payment. Please try again later.';
+                document.getElementById('message').textContent = 'Payment failed or order creation failed. Please try again later.';
             }
         });
 
@@ -278,60 +239,28 @@
 
             const data = await response.json();
             if (response.ok) {
-                const filename = data.filename;
-                const fileUrl = data.fileURL;
+                // Log the file URL to the console
+                console.log("Downloaded file URL:", data.fileURL);
 
-                // Create a temporary <a> element for the download
-                const downloadLink = document.createElement('a');
-                downloadLink.href = fileUrl;
-                downloadLink.download = filename;
-                downloadLink.style.display = 'none';
+                // Create a unique filename based on the current date and the original filename
+                const now = new Date();
+                const formattedDate = now.toISOString().slice(0, 10); // Format date as YYYY-MM-DD
+                const uniqueFilename = `${formattedDate}-${data.filename}`; // Assuming data.filename exists
 
-                // Append to document and trigger the download
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-
-                // Save the downloaded file details to localStorage
-                const downloadedFiles = JSON.parse(localStorage.getItem('downloadedFiles')) || [];
-                downloadedFiles.push({ filename, fileUrl });
-                localStorage.setItem('downloadedFiles', JSON.stringify(downloadedFiles));
-
-                // Display the downloaded file in the list
-                displayDownloadedFiles();
+                // Add the downloaded file to the list of downloaded files
+                const downloadedFilesList = document.getElementById('downloaded-files-list');
+                const li = document.createElement('li');
+                li.textContent = uniqueFilename;
+                downloadedFilesList.appendChild(li);
             } else {
-                console.error("Download failed:", data.message);
-                document.getElementById('message').textContent = data.message;
+                console.error('Failed to download expenses:', data.message);
             }
         });
 
-        // Function to display the downloaded files list from localStorage
-        const displayDownloadedFiles = () => {
-            const downloadedFiles = JSON.parse(localStorage.getItem('downloadedFiles')) || [];
-            const downloadedFilesList = document.getElementById('downloaded-files-list');
-            downloadedFilesList.innerHTML = ''; // Clear the list
-
-            downloadedFiles.forEach(file => {
-                if (file.filename) {
-                    const listItem = document.createElement('li');
-                    const userId = file.filename.split('-')[2]; // Extract UserId from filename
-                    listItem.textContent = `${file.filename} (UserId: ${userId})`;
-                    downloadedFilesList.appendChild(listItem);
-                }
-            });
-        };
-
-        // Load user status, expenses, and downloaded files on page load
-        window.onload = () => {
-            loadUserStatus();
-            loadExpenses(currentPage, pageSize);
-            displayDownloadedFiles(); // Load downloaded files from localStorage
-        };
-
-        // Load leaderboard on button click
-        document.getElementById('leaderboard-button').addEventListener('click', () => {
-            window.location.href = '/leaderboard'; // Redirect to the leaderboard route
-        });
+        // Initial data load
+        loadUserStatus();
+        loadExpenses();
     </script>
 </body>
 </html>
+
