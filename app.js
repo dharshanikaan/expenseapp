@@ -17,6 +17,7 @@ const app = express();
 // Middleware setup
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'views')));
 
 // Serve HTML files
@@ -36,7 +37,6 @@ app.get('/leaderboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'premiumfeatures.html'));
 });
 
-console.log(process.env.NODE_DEV)
 // Use routes
 app.use('/api/users', userRoutes);
 app.use('/api/expenses', expenseRoutes);
