@@ -4,18 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leaderboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        .container { padding: 20px; max-width: 600px; margin: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; border: 1px solid #ccc; }
-    </style>
+    <link rel="stylesheet" href="styles.css"> <!-- Include your CSS here -->
 </head>
 <body>
     <div class="container">
         <h1>Leaderboard</h1>
-        <button onclick="fetchLeaderboard()">View Leaderboard</button>
-        <table>
+        
+        <!-- Table to display leaderboard -->
+        <table id="leaderboardTable">
             <thead>
                 <tr>
                     <th>User ID</th>
@@ -23,44 +19,63 @@
                     <th>Total Expenses</th>
                 </tr>
             </thead>
-            <tbody id="leaderboard-list"></tbody>
+            <tbody>
+                <!-- Leaderboard data will be populated here dynamically -->
+            </tbody>
         </table>
-        <button onclick="location.href='expenses.html'">Back to Dashboard</button>
+
+        <!-- Button to go back to the dashboard -->
+        <button onclick="window.location.href='/expenses';">Back to Dashboard</button>
     </div>
 
     <script>
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.error('No token found, please log in.');
-            window.location.href = '/login'; // Redirect to login page
+        // Fetch leaderboard data from backend
+        async function fetchLeaderboard() {
+            try {
+                const response = await fetch('/api/premium/features/leaderboard', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}` // Send token in header
+                    }
+                });
+                
+
+                if (response.status === 401) {
+                    alert('You need to be logged in to access the leaderboard.');
+                    window.location.href = '/login';  // Redirect to login
+                    return;
+                }
+
+                if (response.status === 403) {
+                    alert('You need a premium membership to access the leaderboard.');
+                    window.location.href = '/upgrade';  // Redirect to premium upgrade page
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Error: ' + response.statusText);
+                }
+
+                const data = await response.json();
+
+                // Populate the leaderboard table with data
+                const leaderboardTable = document.getElementById('leaderboardTable').getElementsByTagName('tbody')[0];
+                leaderboardTable.innerHTML = ''; // Clear existing rows (if any)
+
+                data.forEach(user => {
+                    const row = leaderboardTable.insertRow();
+                    row.insertCell(0).textContent = user.id; // User ID
+                    row.insertCell(1).textContent = user.name; // User Name
+                    row.insertCell(2).textContent = user.totalExpense; // Total Expenses
+                });
+            } catch (error) {
+                console.error('Error fetching leaderboard:', error);
+                alert('Error loading leaderboard. Please try again later.');
+            }
         }
 
-        function fetchLeaderboard() {
-            fetch('http://localhost:3000/api/premium/leaderboard', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => renderLeaderboard(data))
-            .catch(error => console.error('Error fetching leaderboard:', error));
-        }
-
-        function renderLeaderboard(data) {
-            const leaderboardContainer = document.querySelector('#leaderboard-list');
-            leaderboardContainer.innerHTML = '';
-
-            data.forEach(user => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${user.id}</td>
-                    <td>${user.name}</td>
-                    <td>₹${user.totalExpense !== undefined ? user.totalExpense : '0'}</td>
-                `;
-                leaderboardContainer.appendChild(row);
-            });
-        }
+        // Fetch leaderboard data when the page loads
+        window.onload = fetchLeaderboard;
     </script>
 </body>
 </html>

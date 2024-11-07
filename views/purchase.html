@@ -27,9 +27,9 @@
                     }
                 });
 
-                const data = await response.json();
-
                 if (response.ok) {
+                    const data = await response.json();
+
                     const options = {
                         key: 'rzp_test_bo86XocxRgynHk', // Your Razorpay key ID
                         amount: data.amount,
@@ -37,13 +37,13 @@
                         name: 'Your Company Name',
                         description: 'Purchase Premium Membership',
                         order_id: data.orderId,
-                        handler: async (paymentResponse) => {
+                        handler: async (razorpayResponse) => {
                             const paymentData = {
                                 orderId: data.orderId,
-                                paymentId: paymentResponse.razorpay_payment_id
+                                paymentId: razorpayResponse.razorpay_payment_id
                             };
 
-                            const paymentResponse = await fetch('/api/premium/success', {
+                            const paymentSuccessResponse = await fetch('/api/premium/success', {
                                 method: 'POST',
                                 headers: {
                                     'Authorization': `Bearer ${token}`,
@@ -52,7 +52,7 @@
                                 body: JSON.stringify(paymentData)
                             });
 
-                            if (paymentResponse.ok) {
+                            if (paymentSuccessResponse.ok) {
                                 alert('Payment successful! Redirecting to expenses...');
                                 window.location.href = '/expenses';
                             } else {
@@ -67,7 +67,8 @@
                     const razorpay = new Razorpay(options);
                     razorpay.open();
                 } else {
-                    alert(data.message);
+                    const errorData = await response.json(); // If response is not ok, parse the error response body
+                    alert(errorData.message || 'An error occurred. Please try again.');
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -76,3 +77,4 @@
         });
     </script>
 </body>
+</html>

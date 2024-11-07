@@ -11,17 +11,37 @@ const s3 = new AWS.S3({
     region: 'us-west-2', // Adjust as needed
 });
 
+// In your expense controller (expensecontroller.js)
 const getExpenses = async (req, res) => {
     const userId = req.userId;
+    const { pageSize = 10, page = 1 } = req.query; // Get page size and page number from query params (default pageSize is 10)
+
+    const limit = parseInt(pageSize); // Number of items per page
+    const offset = (parseInt(page) - 1) * limit; // Offset to fetch the correct page
 
     try {
-        const expenses = await models.Expense.findAll({ where: { userId } });
-        res.status(200).json(expenses);
+        const expenses = await models.Expense.findAll({
+            where: { userId },
+            limit,
+            offset,
+        });
+
+        const totalExpenses = await models.Expense.count({ where: { userId } });
+        const totalPages = Math.ceil(totalExpenses / limit); // Calculate the total number of pages
+
+        res.status(200).json({
+            expenses,
+            totalPages,
+            currentPage: page,
+            pageSize: limit,
+            totalExpenses,
+        });
     } catch (error) {
         console.error('Error fetching expenses:', error);
         res.status(500).json({ message: 'Error fetching expenses.' });
     }
 };
+
 
 const downloadExpense = async (req, res) => {
     try {
