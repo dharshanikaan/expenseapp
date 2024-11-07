@@ -10,7 +10,7 @@ const razorpay = new Razorpay({
 
 const createOrder = async (req, res) => {
     const options = {
-        amount: 50000, // Amount in paisa (₹500)
+        amount: 50000, // ₹500 in paisa
         currency: 'INR',
         receipt: `receipt#${Date.now()}`,
         notes: { userId: req.userId }
@@ -19,10 +19,10 @@ const createOrder = async (req, res) => {
     try {
         const order = await razorpay.orders.create(options);
         await models.Order.create({ userId: req.userId, orderId: order.id, status: 'PENDING' });
-        res.status(201).json({ orderId: order.id, amount: options.amount });
+        return res.status(201).json({ orderId: order.id, amount: options.amount });
     } catch (error) {
         console.error('Error creating order:', error);
-        res.status(500).json({ message: 'Error creating order.', error: error.message });
+        return res.status(500).json({ message: 'Error creating order.', error: error.message });
     }
 };
 
@@ -35,14 +35,17 @@ const handlePaymentSuccess = async (req, res) => {
             return res.status(404).json({ message: 'Order not found.' });
         }
 
+        // Update order status to successful
         order.status = 'SUCCESSFUL';
         await order.save();
 
+        // Mark user as premium
         await models.User.update({ isPremium: true }, { where: { id: order.userId } });
-        res.status(200).json({ message: 'Payment successful.' });
+
+        return res.status(200).json({ message: 'Payment successful.' });
     } catch (error) {
         console.error('Error handling payment:', error);
-        res.status(500).json({ message: 'Error handling payment.' });
+        return res.status(500).json({ message: 'Error handling payment.' });
     }
 };
 

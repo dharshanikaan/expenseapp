@@ -1,6 +1,5 @@
-// middleware/authenticatetoken.js
 const jwt = require('jsonwebtoken');
-require('dotenv').config({ path: '../expenseapppassword/.env' });
+require('dotenv').config();
 
 const authenticateToken = (req, res, next) => {
     const token = req.headers['authorization']?.split(' ')[1];
