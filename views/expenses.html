@@ -204,75 +204,67 @@
                 document.getElementById('message').textContent = 'Network error.';
             }
         });
+
         document.getElementById('buy-premium').addEventListener('click', async () => {
-    const token = localStorage.getItem('token');  // Get token from localStorage
+            const token = localStorage.getItem('token');
 
-    if (!token) {
-        document.getElementById('message').textContent = 'You must be logged in to purchase premium.';
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/premium/purchase/order', {
-            method: 'POST',
-            body: JSON.stringify({ amount: 50000 }), // Example payload
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // Add the token here
-            }
-        });
-
-        if (!response.ok) {
-            const errorData = await response.text();
-            throw new Error(errorData);
-        }
-
-        const orderData = await response.json(); // This is where we get the order details
-
-        const options = {
-            key: 'rzp_test_bo86XocxRgynHk', // Your Razorpay key ID
-            amount: orderData.amount,
-            currency: 'INR',
-            name: 'Expense Tracker',
-            order_id: orderData.orderId, // Use orderId from orderData
-            handler: async function (response) {
-                const paymentResponse = await fetch('/api/premium/success', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,  // Send token here as well
-                    },
-                    body: JSON.stringify({
-                        orderId: orderData.orderId, // Use orderId from orderData
-                        paymentId: response.razorpay_payment_id,
-                    }),
+            try {
+                const response = await fetch('/api/premium/purchase/order', {
+                method: 'POST',
+                body: JSON.stringify({ amount: 50000 }), // Example payload
+                headers: { 'Content-Type': 'application/json' }
                 });
 
-                if (paymentResponse.ok) {
-                    document.getElementById('message').textContent = 'Payment successful! You are now a Premium Member!';
-                    loadUserStatus();
-                } else {
-                    document.getElementById('message').textContent = 'Payment failed.';
+                if (!orderResponse.ok) {
+                    const errorData = await orderResponse.text();
+                    throw new Error(errorData);
                 }
-            },
-            prefill: {
-                name: 'Your Name',
-                email: 'your.email@example.com',
-            },
-            theme: {
-                color: '#F37254',
-            },
-        };
 
-        const razorpay = new Razorpay(options);
-        razorpay.open();
+                const orderData = await orderResponse.json();
 
-    } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('message').textContent = 'Failed to create order or process payment. Please try again later.';
-    }
-});
+                const options = {
+                    key: 'rzp_test_bo86XocxRgynHk', // Your Razorpay key ID
+                    amount: orderData.amount,
+                    currency: 'INR',
+                    name: 'Expense Tracker',
+                    order_id: orderData.orderId,
+                    handler: async function (response) {
+                        const paymentResponse = await fetch('/api/premium/success', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                                orderId: orderData.orderId,
+                                paymentId: response.razorpay_payment_id,
+                            }),
+                        });
 
+                        if (paymentResponse.ok) {
+                            document.getElementById('message').textContent = 'Payment successful! You are now a Premium Member!';
+                            loadUserStatus();
+                        } else {
+                            document.getElementById('message').textContent = 'Payment failed.';
+                        }
+                    },
+                    prefill: {
+                        name: 'Your Name',
+                        email: 'your.email@example.com',
+                    },
+                    theme: {
+                        color: '#F37254',
+                    },
+                };
+
+                const razorpay = new Razorpay(options);
+                razorpay.open();
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('message').textContent = 'Failed to create order or process payment. Please try again later.';
+            }
+        });
 
         // Download expenses functionality for premium users
         document.getElementById('download-button').addEventListener('click', async () => {

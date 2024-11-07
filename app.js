@@ -36,7 +36,7 @@ app.get('/leaderboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'premiumfeatures.html'));
 });
 
-
+console.log(process.env.NODE_DEV)
 // Use routes
 app.use('/api/users', userRoutes);
 app.use('/api/expenses', expenseRoutes);
