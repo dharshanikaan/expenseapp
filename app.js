@@ -1,11 +1,11 @@
 require('dotenv').config({ path: '../expenseapppassword/.env' });
-
+const fs=require('fs');
+const https=require('http');
 const express = require('express');
 const { sequelize } = require('./util/database');
 const bodyParser = require('body-parser');
 const path = require('path');
 const cors = require('cors');
-
 const userRoutes = require('./routes/userroutes');
 const expenseRoutes = require('./routes/expenseroutes');
 const purchaseRoutes = require('./routes/purchaseroutes');
@@ -14,10 +14,12 @@ const passwordRoutes = require('./routes/password');
 
 const app = express();
  
-// Middleware setup
+const helmet=require('helmet');
+const compression=require('compression');
+const morgan=require('morgan');
+
 app.use(cors());
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
 app.use(express.static(path.join(__dirname, 'views')));
 
 // Serve HTML files
@@ -37,7 +39,18 @@ app.get('/leaderboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'premiumfeatures.html'));
 });
 
+const accessLogStream = fs.createWriteStream(
+    path.join(__dirname, "access.log"),
+    { flag: 'a' }
+);
+
+
+app.use(helmet())
+app.use(compression())
+app.use(morgan('combined',{stream:accessLogStream}));
+
 // Use routes
+
 app.use('/api/users', userRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/premium/purchase', purchaseRoutes); // Changed route to avoid conflict
