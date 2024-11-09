@@ -1,4 +1,3 @@
-
 const { models } = require('../util/database');
 
 const checkPremium = async (req, res, next) => {
