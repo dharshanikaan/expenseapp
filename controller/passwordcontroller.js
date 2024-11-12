@@ -1,9 +1,10 @@
+require('dotenv').config({ path: '../expenseapppassword/.env' });
 const { models } = require('../util/database'); // Ensure correct import
 const User = models.User;
 const ForgotPasswordRequest = models.ForgotPasswordRequest; // Get from models
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 const bcrypt = require('bcrypt');
-require('dotenv').config();
+
 
 // Initialize Sendinblue API client
 const apiKey = new SibApiV3Sdk.ApiClient();

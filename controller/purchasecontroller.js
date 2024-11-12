@@ -1,7 +1,6 @@
+require('dotenv').config({ path: '../expenseapppassword/.env' });
 const Razorpay = require('razorpay');
 const { models } = require('../util/database'); // Import models only once
-require('dotenv').config();
-
 // Initialize Razorpay
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
