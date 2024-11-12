@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '../expenseapppassword/.env' });
+require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
 

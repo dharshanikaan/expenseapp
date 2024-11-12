@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '../expenseapppassword/.env' });
+require('dotenv').config();
 const { models } = require('../util/database');
 
 const checkPremium = async (req, res, next) => {

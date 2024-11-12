@@ -1,4 +1,5 @@
 const express = require('express');
+require('dotenv').config({ path: '../expenseapppassword/.env' });
 const { createOrder, handlePaymentSuccess } = require('../controller/purchasecontroller'); // Ensure this path is correct
 const authenticateToken = require('../middleware/authenticatetoken');
 
