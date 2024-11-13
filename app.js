@@ -61,11 +61,8 @@ app.use(morgan('combined',{stream:accessLogStream}));
 // Sync database and start the server
 sequelize.sync()
     .then(() => {
-        https.createServer({key:privateKey,cert:certificate},app)
-        .listen(3000, () => {
-            console.log('Server running on http://localhost:3000');
-        });
-    })
+      app.listen(3000)
+    })    
     .catch(err => {
         console.error('Unable to connect to the database:', err);
     });
