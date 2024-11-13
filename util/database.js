@@ -8,8 +8,6 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USERNAME, pr
     dialect: 'mysql',
     port: process.env.DB_PORT,
 });
-
-
 const User = require('../models/user')(sequelize, Sequelize.DataTypes);
 const Expense = require('../models/expense')(sequelize, Sequelize.DataTypes);
 const Order = require('../models/order')(sequelize, Sequelize.DataTypes);
