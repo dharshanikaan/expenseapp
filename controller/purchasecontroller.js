@@ -3,8 +3,8 @@ const Razorpay = require('razorpay');
 const { models } = require('../util/database'); // Import models only once
 // Initialize Razorpay
 const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
+    key_id:process.env.RAZORPAY_KEY_ID,
+    key_secret:process.env.RAZORPAY_KEY_SECRET,
 });
 
 const createOrder = async (req, res) => {
