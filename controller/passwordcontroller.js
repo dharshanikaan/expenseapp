@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: '../expenseapppassword/.env' });
 const { models } = require('../util/database'); // Ensure correct import
 const User = models.User;
 const ForgotPasswordRequest = models.ForgotPasswordRequest; // Get from models

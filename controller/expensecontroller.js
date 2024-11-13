@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: '../expenseapppassword/.env' });
 const AWS = require('aws-sdk');
 const { models, sequelize } = require('../util/database');
 const { body, validationResult } = require('express-validator');
