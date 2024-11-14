@@ -1,4 +1,3 @@
-
 const { body, validationResult } = require('express-validator');
 const { models } = require('../util/database'); // Correct import
 const User = models.User; // Use the imported User model
@@ -13,7 +12,7 @@ const signup = [
     async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
+            return res.status(400).json({ errors: errors.array() });  // Validation error
         }
 
         const { name, email, password } = req.body;

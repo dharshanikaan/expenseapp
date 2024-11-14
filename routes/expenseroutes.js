@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '../expenseapppassword/.env' });
+// In your expense routes (expenseroutes.js)
 const express = require('express');
 const { downloadExpense, addExpense, getExpenses, deleteExpense } = require('../controller/expensecontroller');
 const authenticateToken = require('../middleware/authenticatetoken');

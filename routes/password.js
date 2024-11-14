@@ -1,4 +1,3 @@
-require('dotenv').config({ path: '../expenseapppassword/.env' });
 const express = require('express');
 const { forgotPassword, resetPassword } = require('../controller/passwordcontroller');
 

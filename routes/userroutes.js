@@ -1,4 +1,3 @@
-require('dotenv').config({ path: '../expenseapppassword/.env' });
 const express = require('express');
 const { signup, login, getUserStatus } = require('../controller/usercontroller');
 const authenticateToken = require('../middleware/authenticatetoken');

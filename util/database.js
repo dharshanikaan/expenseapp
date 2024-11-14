@@ -1,13 +1,11 @@
 require('dotenv').config({ path: '../expenseapppassword/.env' });
-
-console.log("DB_HOST:", process.env.DB_HOST);  // Debugging line to confirm DB_HOST is loaded correctly
-
 const Sequelize = require('sequelize');
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USERNAME, process.env.DB_PASSWORD, {
+const sequelize = new Sequelize(process.env.DB_NAME,process.env.DB_USERNAME,process.env.DB_PASSWORD, {
     host: process.env.DB_HOST,
-    dialect: 'mysql',
-    port: process.env.DB_PORT,
+    dialect: "mysql",
+    port:process.env.DB_PORT,
 });
+
 const User = require('../models/user')(sequelize, Sequelize.DataTypes);
 const Expense = require('../models/expense')(sequelize, Sequelize.DataTypes);
 const Order = require('../models/order')(sequelize, Sequelize.DataTypes);

@@ -1,4 +1,3 @@
-require('dotenv').config({ path: '../expenseapppassword/.env' });
 const { models } = require('../util/database');
 
 const getLeaderboard = async (req, res) => {
